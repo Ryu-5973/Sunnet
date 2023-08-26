@@ -267,9 +267,12 @@ int Sunnet::HandleTCPCreate(uint32_t port, uint32_t serviceId) {
         return -1;
     }
 
-    fcntl(listenFd, F_SETFL, O_NONBLOCK);
+    if (SetNonBlocking(listenFd) == -1) {
+        return -1;
+    }
 
     struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -289,16 +292,56 @@ int Sunnet::HandleTCPCreate(uint32_t port, uint32_t serviceId) {
 
     m_SocketWorker->AddEvent(listenFd);
 
-    LOG_INFO("[Sunnet] Port = %d Service = %d Listening...", port, serviceId);
-    // LOG_INFO("%d %d %d", addr.sin_family, addr.sin_port, addr.sin_addr.s_addr); todo: 找时间把这玩意转成看得懂的。。。
+    LOG_INFO("[Sunnet] Port = %d Service = %d Listening[TCP]...", port, serviceId);
     return listenFd;
 }
 
 int Sunnet::HandleUDPCreate(uint32_t port, uint32_t serviceId) {
-    return 0;
+    int listenFd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(listenFd < 0) {
+        LOG_ERR("listen error, listenFd <= 0");
+        return -1;
+    }
+
+    if (SetNonBlocking(listenFd) == -1) {
+        return -1;
+    }
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    int ret = bind(listenFd, (struct sockaddr*)&addr, sizeof(addr));
+    if(ret == -1) {
+        LOG_ERR("listen error, bind fail port = %d", port);
+        return -1;
+    }
+
+    AddConn(listenFd, serviceId, Conn::Type::LISTEN);
+
+    m_SocketWorker->AddEvent(listenFd, EPOLLIN);
+
+    LOG_INFO("[Sunnet] Port = %d Service = %d Listening[UDP]...", port, serviceId);
+    return listenFd;
 }
 
 int Sunnet::HandleKCPCreate(uint32_t port, uint32_t serviceId) {
+    return 0;
+}
+
+int Sunnet::SetNonBlocking(int fd) {
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) {
+        LOG_ERR("fcntl(F_GETFL) failed");
+        return -1;
+    }
+    flags |= O_NONBLOCK;
+    if (fcntl(fd, F_SETFL, flags) == -1) {
+        LOG_ERR("fcntl(F_SETFL) failed");
+        return -1;
+    }
     return 0;
 }
 

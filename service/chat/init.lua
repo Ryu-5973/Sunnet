@@ -8,6 +8,7 @@ function OnInit(id)
     serviceId = id
     LOG_INFO("[lua] char OnInit id: " .. id)
     sunnet.Listen(8002, id, EnumNetProtoType.TCP)
+    sunnet.Listen(8003, id, EnumNetProtoType.UDP)
 end
 
 function OnAcceptMsg(listenFd, clientFd)

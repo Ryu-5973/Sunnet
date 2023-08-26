@@ -143,7 +143,7 @@ void Service::OnAcceptMsg(std::shared_ptr<SocketAcceptMsg> msg) {
     lua_pushinteger(m_LuaState, msg->m_ListenFd);
     lua_pushinteger(m_LuaState, msg->m_WriteFd);
     int isOk = lua_pcall(m_LuaState, 2, 0, 0);
-    if(isOk == 0) {
+    if(isOk != 0) {
         LOG_ERR("call lua OnAccept fail %s", lua_tostring(m_LuaState, -1));
         return ;
     }

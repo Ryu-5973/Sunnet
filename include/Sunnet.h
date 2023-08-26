@@ -88,6 +88,7 @@ private:
 
 private:
     void StartWorker();
+    int SetNonBlocking(int fd);
     
     // 获取服务
     std::shared_ptr<Service> GetService(uint32_t);

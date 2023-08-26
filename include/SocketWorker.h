@@ -10,7 +10,7 @@ public:
     void Init();
     void operator()();
 
-    void AddEvent(int fd);
+    void AddEvent(int fd, uint32_t event = EPOLLIN | EPOLLET);
     void RemoveEvent(int fd);
     void ModifyEvent(int fd, bool epollOut);
 

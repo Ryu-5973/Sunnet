@@ -34,11 +34,11 @@ void SocketWorker::operator()() {
     }      
 }
 
-void SocketWorker::AddEvent(int fd) {
+void SocketWorker::AddEvent(int fd, uint32_t event) {
     LOG_INFO("AddEvent Fd = %d", fd);
 
     struct epoll_event ev;
-    ev.events = EPOLLIN | EPOLLET;
+    ev.events = event;
     ev.data.fd = fd;
     if(epoll_ctl(m_EpollFd, EPOLL_CTL_ADD, fd, &ev) == -1) {
         LOG_INFO("AddEvent epoll_ctl fail: %s", strerror(errno));
@@ -91,7 +91,7 @@ void SocketWorker::OnEvent(epoll_event ev) {
 }
 
 void SocketWorker::OnAccept(std::shared_ptr<Conn> conn) {
-    LOG_ERR("OnAccept fd = %d", conn->m_Fd);
+    LOG_INFO("OnAccept fd = %d", conn->m_Fd);
 
     int clientFd = accept(conn->m_Fd, NULL, NULL);
     if(clientFd < 0) {
@@ -104,7 +104,7 @@ void SocketWorker::OnAccept(std::shared_ptr<Conn> conn) {
     // 写缓冲区大小
     unsigned long buffSize = WRITE_BUFFSIZE;
     if(setsockopt(clientFd, SOL_SOCKET, SO_SNDBUFFORCE, &buffSize, sizeof(buffSize)) < 0) {
-        LOG_ERR("ONAccept setsockopt Fail %s", strerror(errno));
+        LOG_ERR("OnAccept setsockopt Fail %s", strerror(errno));
         return ;
     }
 
