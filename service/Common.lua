@@ -1,2 +1,2 @@
 require("LogMgr")
-local msgpck = require("MessagePack")
+msgpck = require("MessagePack")
