@@ -17,11 +17,6 @@ void test() {
 }
 
 void TestSocketCtrl() {
-    int fd1 = Sunnet::Inst->Listen(8001, 1);
-    int fd2 = Sunnet::Inst->Listen(8002, 2);
-    usleep(15 * 10000);
-    Sunnet::Inst->CloseConn(fd1);
-    Sunnet::Inst->CloseConn(fd2);
 }
 
 void TestEcho() {

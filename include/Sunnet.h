@@ -11,6 +11,12 @@
 #include "Conn.h"
 #include "CommonDefs.h"
 
+extern "C" {
+    #include "lua.h"
+    #include "lauxlib.h"
+    #include "lualib.h"
+}
+
 class Service;
 class BaseMsg;
 class Worker;
@@ -54,7 +60,7 @@ public:
     bool RemoveConn(int);
 
     // 网络连接相关接口
-    int Listen(uint32_t port, uint32_t serviceId);
+    int Listen(lua_State* luaState, int port, uint32_t serviceId, uint32_t protocolType);
     void CloseConn(uint32_t fd);
 
     // 测试函数
@@ -85,4 +91,9 @@ private:
     
     // 获取服务
     std::shared_ptr<Service> GetService(uint32_t);
+
+    // 网络创建
+    int HandleTCPCreate(uint32_t port, uint32_t serviceId);
+    int HandleUDPCreate(uint32_t port, uint32_t serviceId);
+    int HandleKCPCreate(uint32_t port, uint32_t serviceId);
 };

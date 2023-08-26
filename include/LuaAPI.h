@@ -24,4 +24,6 @@ public:
     static int LogErr(lua_State* luaState);
 
 
+    // 获取lua相关数据
+    static int GetEnumConfig(lua_State* luaState, std::string enumName, std::string key);
 };

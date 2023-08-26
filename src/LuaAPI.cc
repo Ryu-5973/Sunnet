@@ -112,7 +112,7 @@ int LuaAPI::Send(lua_State* luaState) {
 
 int LuaAPI::Listen(lua_State* luaState) {
     int argNum = lua_gettop(luaState);
-    if(argNum != 2) {
+    if(argNum != 3) {
         LOG_ERR("Listen Fail, argNum = %d", argNum);
         return 0;
     }
@@ -126,7 +126,12 @@ int LuaAPI::Listen(lua_State* luaState) {
         return 0;
     }
     uint32_t serviceId = lua_tointeger(luaState, 2);
-    int ret = Sunnet::Inst->Listen(port, serviceId);
+    if(lua_isinteger(luaState, 3) == 0) {
+        LOG_ERR("Listen Fail, arg3 err");
+        return 0;
+    }
+    uint32_t protocolType = lua_tointeger(luaState, 3);
+    int ret = Sunnet::Inst->Listen(luaState, port, serviceId, protocolType);
     lua_pushinteger(luaState, ret);
 
     return 1;
@@ -253,5 +258,16 @@ int LuaAPI::LogErr(lua_State* luaState) {
     spdlog::error(str);
     
     return 1;
+}
+
+int LuaAPI::GetEnumConfig(lua_State* luaState, std::string enumName, std::string key) {
+    lua_getglobal(luaState, enumName.c_str());
+    lua_getfield(luaState, -1, key.c_str());
+    if(lua_isinteger(luaState, -1) == 0) {
+        LOG_ERR("Invalide enum");
+        return 0;
+    }
+    int val = lua_tointeger(luaState, -1);
+    return val;
 }
 

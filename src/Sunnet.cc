@@ -10,6 +10,7 @@
 
 #include "Sunnet.h"
 #include "Service.h"
+#include "LuaAPI.h"
 
 #include "spdlog/spdlog.h"
 
@@ -236,7 +237,30 @@ bool Sunnet::RemoveConn(int fd) {
     return ret == 1;
 }
 
-int Sunnet::Listen(uint32_t port, uint32_t serviceId) {
+int Sunnet::Listen(lua_State* luaState, int port, uint32_t serviceId, uint32_t protocolType) {
+    if(protocolType == LuaAPI::GetEnumConfig(luaState, "EnumNetProtoType", "TCP")) { // tcp
+        return HandleTCPCreate(port, serviceId);
+    }else if(protocolType == LuaAPI::GetEnumConfig(luaState, "EnumNetProtoType", "UDP")) {
+        return HandleUDPCreate(port, serviceId);
+    }else if(protocolType == LuaAPI::GetEnumConfig(luaState, "EnumNetProtoType", "KCP")) {
+        return HandleKCPCreate(port, serviceId);
+    }
+    
+    LOG_ERR("Listen Fail, unkown protocol type %d", protocolType);
+    return 0;
+}
+
+void Sunnet::CloseConn(uint32_t fd) {
+    bool succ = RemoveConn(fd);
+
+    close(fd);
+
+    if(succ) {
+        m_SocketWorker->RemoveEvent(fd);
+    }
+}
+
+int Sunnet::HandleTCPCreate(uint32_t port, uint32_t serviceId) {
     int listenFd = socket(AF_INET, SOCK_STREAM, 0);
     if(listenFd < 0) {
         LOG_ERR("listen error, listenFd <= 0");
@@ -270,15 +294,11 @@ int Sunnet::Listen(uint32_t port, uint32_t serviceId) {
     return listenFd;
 }
 
-void Sunnet::CloseConn(uint32_t fd) {
-    bool succ = RemoveConn(fd);
-
-    close(fd);
-
-    if(succ) {
-        m_SocketWorker->RemoveEvent(fd);
-    }
+int Sunnet::HandleUDPCreate(uint32_t port, uint32_t serviceId) {
+    return 0;
 }
 
-
+int Sunnet::HandleKCPCreate(uint32_t port, uint32_t serviceId) {
+    return 0;
+}
 
