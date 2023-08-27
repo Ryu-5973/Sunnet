@@ -202,11 +202,12 @@ void Sunnet::StartSocket() {
     m_SocketThread = new std::thread(*m_SocketWorker);
 }
 
-int Sunnet::AddConn(int fd, uint32_t id, Conn::Type type) {
+int Sunnet::AddConn(int fd, uint32_t id, Conn::Type type, int protocolType) {
     auto conn = std::make_shared<Conn>();
     conn->m_Fd = fd;
     conn->m_ServiceId = id;
     conn->m_Type = type;
+    conn->m_ProtocolType = protocolType;
     pthread_rwlock_wrlock(&m_ConnsLock);
     {
         m_Conns.emplace(fd, conn);
@@ -238,11 +239,11 @@ bool Sunnet::RemoveConn(int fd) {
 }
 
 int Sunnet::Listen(lua_State* luaState, int port, uint32_t serviceId, uint32_t protocolType) {
-    if(protocolType == LuaAPI::GetEnumConfig(luaState, "EnumNetProtoType", "TCP")) { // tcp
+    if(protocolType == LuaAPI::GetEnumConfig("EnumNetProtoType", "TCP")) { // tcp
         return HandleTCPCreate(port, serviceId);
-    }else if(protocolType == LuaAPI::GetEnumConfig(luaState, "EnumNetProtoType", "UDP")) {
+    }else if(protocolType == LuaAPI::GetEnumConfig("EnumNetProtoType", "UDP")) {
         return HandleUDPCreate(port, serviceId);
-    }else if(protocolType == LuaAPI::GetEnumConfig(luaState, "EnumNetProtoType", "KCP")) {
+    }else if(protocolType == LuaAPI::GetEnumConfig("EnumNetProtoType", "KCP")) {
         return HandleKCPCreate(port, serviceId);
     }
     
@@ -288,7 +289,7 @@ int Sunnet::HandleTCPCreate(uint32_t port, uint32_t serviceId) {
         return -1;
     }
 
-    AddConn(listenFd, serviceId, Conn::Type::LISTEN);
+    AddConn(listenFd, serviceId, Conn::Type::LISTEN, LuaAPI::GetEnumConfig("EnumNetProtoType", "TCP"));
 
     m_SocketWorker->AddEvent(listenFd);
 
@@ -319,7 +320,7 @@ int Sunnet::HandleUDPCreate(uint32_t port, uint32_t serviceId) {
         return -1;
     }
 
-    AddConn(listenFd, serviceId, Conn::Type::LISTEN);
+    AddConn(listenFd, serviceId, Conn::Type::LISTEN, LuaAPI::GetEnumConfig("EnumNetProtoType", "TCP"));
 
     m_SocketWorker->AddEvent(listenFd, EPOLLIN);
 

@@ -36,6 +36,7 @@
 
 # tool script
 nf.sh
+cli.sh
 
 # build
 build/

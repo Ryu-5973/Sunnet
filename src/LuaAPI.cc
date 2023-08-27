@@ -10,9 +10,7 @@
 #include "LuaAPI.h"
 #include "Sunnet.h"
 #include "Msg.h"
-
-#include "spdlog/spdlog.h"
-
+#include "CommonDefs.h"
 
 
 void LuaAPI::Register(lua_State* luaState) {
@@ -260,12 +258,24 @@ int LuaAPI::LogErr(lua_State* luaState) {
     return 1;
 }
 
-int LuaAPI::GetEnumConfig(lua_State* luaState, std::string enumName, std::string key) {
+int LuaAPI::GetEnumConfig(std::string enumName, std::string key) {
+    static lua_State* luaState = NULL;
+    if(luaState == NULL) {
+        luaState = luaL_newstate();
+        luaL_openlibs(luaState);
+        // 执行lua文件
+        int isOk = luaL_dofile(luaState, "../service/ExportToCPP.lua");
+        if(isOk == 1) {     // success:0, fail: 1
+            LOG_ERR("run lua fail: %s", lua_tostring(luaState, - 1));
+            return -1;
+        }
+    }
+    
     lua_getglobal(luaState, enumName.c_str());
     lua_getfield(luaState, -1, key.c_str());
     if(lua_isinteger(luaState, -1) == 0) {
         LOG_ERR("Invalide enum");
-        return 0;
+        return -1;
     }
     int val = lua_tointeger(luaState, -1);
     return val;

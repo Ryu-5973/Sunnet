@@ -25,5 +25,5 @@ public:
 
 
     // 获取lua相关数据
-    static int GetEnumConfig(lua_State* luaState, std::string enumName, std::string key);
+    static int GetEnumConfig(std::string enumName, std::string key);
 };

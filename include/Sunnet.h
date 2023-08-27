@@ -55,7 +55,7 @@ public:
     void StartSocket();
 
     // Conn相关
-    int AddConn(int, uint32_t, Conn::Type);
+    int AddConn(int, uint32_t, Conn::Type, int protocolType);
     std::shared_ptr<Conn> GetConn(int);
     bool RemoveConn(int);
 

@@ -108,7 +108,7 @@ void SocketWorker::OnAccept(std::shared_ptr<Conn> conn) {
         return ;
     }
 
-    Sunnet::Inst->AddConn(clientFd, conn->m_ServiceId, Conn::Type::CLINET);
+    Sunnet::Inst->AddConn(clientFd, conn->m_ServiceId, Conn::Type::CLINET, -1);
     AddEvent(clientFd);
 
     auto msg = std::make_shared<SocketAcceptMsg>();

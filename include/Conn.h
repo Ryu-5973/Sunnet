@@ -12,5 +12,6 @@ public:
     uint8_t m_Type;
     int m_Fd;
     uint32_t m_ServiceId;
+    int m_ProtocolType;
 };
 
