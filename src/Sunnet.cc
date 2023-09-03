@@ -16,7 +16,6 @@
 
 Sunnet* Sunnet::Inst;
 Sunnet::Sunnet() {
-
     Inst = this;
 }
 
@@ -29,12 +28,64 @@ void Sunnet::Start() {
     pthread_spin_init(&m_GlobalLock, PTHREAD_PROCESS_PRIVATE);
     pthread_mutex_init(&m_SleepMtx, NULL);
     pthread_cond_init(&m_SleepCond, NULL);
+    pthread_spin_init(&m_UDPSetLock, PTHREAD_PROCESS_PRIVATE);
     assert(pthread_rwlock_init(&m_ConnsLock, NULL) == 0);
     // 开启worker
     StartWorker();
 
     // 开启socket worker
     StartSocket();
+}
+
+void Sunnet::Destroy() {
+    // @region 锁
+    pthread_rwlock_destroy(&m_ServicesLock);
+    pthread_spin_destroy(&m_GlobalLock);
+    pthread_mutex_destroy(&m_SleepMtx);
+    pthread_cond_destroy(&m_SleepCond);
+    pthread_spin_destroy(&m_UDPSetLock);
+    pthread_rwlock_destroy(&m_ConnsLock);
+    // @endregion 锁
+
+
+    // @region 裸指针
+    if (m_SocketWorker != nullptr) {
+        delete m_SocketWorker;
+        m_SocketWorker = nullptr;
+    }
+
+    if (m_SocketThread != nullptr) {
+        delete m_SocketThread;
+        m_SocketThread = nullptr;
+    }
+
+    for (auto worker : m_UDPSocketWorkers) {
+        if (worker != nullptr) {
+            delete worker;
+            worker = nullptr;
+        }
+    }
+
+    {
+        std::vector<UDPListener*> tmp;
+        m_UDPSocketWorkers.swap(tmp);
+    }
+
+    for (auto thread : m_UDPSocketThreads) {
+        if (thread != nullptr) {
+            delete thread;
+            thread = nullptr;
+        }
+    }
+
+    {
+        std::vector<std::thread*> tmp;
+        m_UDPSocketThreads.swap(tmp);
+    }
+
+    // @endregion 裸指针
+
+
 }
 
 void Sunnet::StartWorker() {
@@ -150,7 +201,6 @@ void Sunnet::Send(uint32_t toId, std::shared_ptr<BaseMsg> msg) {
         }
     }
     pthread_spin_unlock(&toSrv->m_InGlobalLock);
-
     // 唤醒进程
     if (hasPush) {
         CheckAndWakeUp();
@@ -298,13 +348,10 @@ int Sunnet::HandleTCPCreate(uint32_t port, uint32_t serviceId) {
 }
 
 int Sunnet::HandleUDPCreate(uint32_t port, uint32_t serviceId) {
+    // udp先单独开个线程整了，应该可行吧。。。观望一波
     int listenFd = socket(AF_INET, SOCK_DGRAM, 0);
     if(listenFd < 0) {
         LOG_ERR("listen error, listenFd <= 0");
-        return -1;
-    }
-
-    if (SetNonBlocking(listenFd) == -1) {
         return -1;
     }
 
@@ -320,9 +367,19 @@ int Sunnet::HandleUDPCreate(uint32_t port, uint32_t serviceId) {
         return -1;
     }
 
-    AddConn(listenFd, serviceId, Conn::Type::LISTEN, LuaAPI::GetEnumConfig("EnumNetProtoType", "TCP"));
+    AddConn(listenFd, serviceId, Conn::Type::LISTEN, LuaAPI::GetEnumConfig("EnumNetProtoType", "UDP"));
 
-    m_SocketWorker->AddEvent(listenFd, EPOLLIN);
+    // 创建线程对象
+    UDPListener* listener = new UDPListener();
+    listener->Init(listenFd);
+    std::thread* t = new std::thread(*listener);
+
+    {
+        pthread_spin_lock(&m_UDPSetLock);
+        m_UDPSocketWorkers.push_back(listener);
+        m_UDPSocketThreads.push_back(t);
+        pthread_spin_unlock(&m_UDPSetLock);
+    }
 
     LOG_INFO("[Sunnet] Port = %d Service = %d Listening[UDP]...", port, serviceId);
     return listenFd;

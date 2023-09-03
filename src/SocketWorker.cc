@@ -12,7 +12,8 @@
 #include "Sunnet.h"
 #include "Conn.h"
 #include "Msg.h"
-
+#include "LuaAPI.h"
+ 
 // 初始化
 void SocketWorker::Init() {
     LOG_INFO("SocketWorker Init");
@@ -89,10 +90,14 @@ void SocketWorker::OnEvent(epoll_event ev) {
         }
     }
 }
-
+   
 void SocketWorker::OnAccept(std::shared_ptr<Conn> conn) {
     LOG_INFO("OnAccept fd = %d", conn->m_Fd);
 
+    OnTCPAccept(conn);
+}
+
+void SocketWorker::OnTCPAccept(std::shared_ptr<Conn> conn) {
     int clientFd = accept(conn->m_Fd, NULL, NULL);
     if(clientFd < 0) {
         LOG_ERR("accept error");

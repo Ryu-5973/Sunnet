@@ -46,6 +46,7 @@ public:
     void OnSocketData(int fd, const char* buff, int len);
     void OnSocketWritable(int fd);
     void OnSocketClose(int fd);
+    void OnUDPMsg(std::shared_ptr<UDPMsg> msg);
 private:
     std::shared_ptr<BaseMsg> PopMsg();
 

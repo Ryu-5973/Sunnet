@@ -5,11 +5,13 @@
 #include <unordered_map>
 #include <memory>
 #include <queue>
+#include <vector>
 
 #include "Worker.h"
 #include "SocketWorker.h"
 #include "Conn.h"
 #include "CommonDefs.h"
+#include "UDPListener.h"
 
 extern "C" {
     #include "lua.h"
@@ -35,6 +37,7 @@ public:
     Sunnet();
     void Start();
     void Wait();
+    void Destroy();
 
     // 增删服务
     uint32_t NewService(std::shared_ptr<std::string>);
@@ -85,6 +88,11 @@ private:
     // Conn列表
     std::unordered_map<int, std::shared_ptr<Conn>> m_Conns;
     pthread_rwlock_t m_ConnsLock;
+
+    // udp 线程集
+    std::vector<UDPListener*> m_UDPSocketWorkers;
+    std::vector<std::thread*> m_UDPSocketThreads;
+    pthread_spinlock_t m_UDPSetLock;
 
 private:
     void StartWorker();

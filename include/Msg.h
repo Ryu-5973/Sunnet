@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 
+#include <CommonDefs.h>
+
 // 消息基类
 class BaseMsg {
 public:
@@ -11,9 +13,10 @@ public:
         SERVICE = 1,
         SOCKET_ACCEPT = 2,
         SOCKET_RW = 3,
+        SOCKET_UDP = 4,
     };
     uint8_t m_Type;
-    char m_Load[999999]{};
+    char m_Load[DEFAULT_LOAD_SIZE]{};
     virtual ~BaseMsg();
 
 };
@@ -38,5 +41,10 @@ public:
     int m_Fd;
     bool m_IsRead = false;
     bool m_IsWrite = false;
+};
+
+class UDPMsg: public BaseMsg {
+public:
+    ssize_t m_Len;
 };
 

@@ -17,6 +17,7 @@ public:
 private:
     void OnEvent(epoll_event ev);
     void OnAccept(std::shared_ptr<Conn> conn);
+    void OnTCPAccept(std::shared_ptr<Conn> conn);
     void OnRW(std::shared_ptr<Conn> conn, bool r, bool w);
     void OnError(std::shared_ptr<Conn> conn);
 private:

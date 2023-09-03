@@ -8,7 +8,7 @@
 #include "LuaAPI.h"
 
 // 构造函数
-Service::Service() {
+Service::Service(): m_IsExiting(false) {
     // 初始化锁
     pthread_spin_init(&m_QueueLock, PTHREAD_PROCESS_PRIVATE);
     pthread_spin_init(&m_InGlobalLock, PTHREAD_PROCESS_PRIVATE);
@@ -79,6 +79,9 @@ void Service::OnMsg(std::shared_ptr<BaseMsg> msg) {
     }else if(msg->m_Type == BaseMsg::Type::SOCKET_RW) {
         auto m = std::dynamic_pointer_cast<SocketRWMsg>(msg);
         OnRWMsg(m);
+    }else if(msg->m_Type == BaseMsg::Type::SOCKET_UDP) {
+        auto m = std::dynamic_pointer_cast<UDPMsg>(msg);
+        OnUDPMsg(m);
     }else {
         LOG_INFO("[%d] OnMsg", m_Id);
     }
@@ -196,5 +199,16 @@ void Service::OnSocketWritable(int fd) {
 
 void Service::OnSocketClose(int fd) {
     LOG_INFO("OnSocketClose %d", fd);
+}
+
+void Service::OnUDPMsg(std::shared_ptr<UDPMsg> msg) {
+    LOG_INFO("OnUDPMsg %s", msg->m_Load);
+    lua_getglobal(m_LuaState, "OnUDPMsg");
+    lua_pushlstring(m_LuaState, msg->m_Load, msg->m_Len);
+    int isOk = lua_pcall(m_LuaState, 1, 0, 0);
+    if(isOk != 0) {
+        LOG_ERR("call lua OnUDPMsg fail %s", lua_tostring(m_LuaState, -1));
+        return ;
+    }
 }
 
