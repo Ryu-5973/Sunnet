@@ -6,9 +6,9 @@ local conns = {}
 
 function OnInit(id)
     serviceId = id
-    LOG_INFO("[lua] char OnInit id: " .. id)
+    LOG_INFO("[lua] chat OnInit id: " .. id)
     sunnet.Listen(8002, id, EnumNetProtoType.TCP)
-    sunnet.Listen(8003, id, EnumNetProtoType.UDP)
+    sunnet.Listen(8002, id, EnumNetProtoType.UDP)
 end
 
 function OnAcceptMsg(listenFd, clientFd)
@@ -17,12 +17,12 @@ function OnAcceptMsg(listenFd, clientFd)
 end
 
 function OnSocketData(fd, buff)
-    LOG_INFO("[lua] char OnSocketData " .. fd .. " " .. buff)
+    LOG_INFO("[lua] chat OnSocketData " .. fd .. " " .. buff)
     Boardcast(buff)
 end
 
 function OnSocketClose(fd)
-    LOG_INFO("[lua] char OnSocketClose " .. fd)
+    LOG_INFO("[lua] chat OnSocketClose " .. fd)
     conns[fd] = nil
 end
 
