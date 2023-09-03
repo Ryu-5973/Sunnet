@@ -7,22 +7,32 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define MAXBUFFER 256
+#define MAXBUFFER 1400
 
 void HandleTcpCreate(char* ip, int port) {
     int clientFd;
     struct sockaddr_in serverAddr;
-    char buf[MAXBUFFER];
+    char buf[MAXBUFFER] = {};
     clientFd = socket(AF_INET, SOCK_STREAM, 0);
     bzero(&serverAddr, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(port);
     inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
     connect(clientFd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+    std::thread t([&buf, clientFd](){
+        while(true) {
+            bzero(buf, sizeof(buf));
+            std::cin >> buf;
+            write(clientFd, buf, strlen(buf));
+        }
+    });
     while(true) {
         bzero(buf, sizeof(buf));
-        std::cin >> buf;
-        write(clientFd, buf, sizeof(buf));
+        ssize_t len = 0;
+        len = read(clientFd, buf, MAXBUFFER);
+        if (len >= 0) {
+            std::cout << buf << std::endl;
+        }
     }
     close(clientFd);
 }
@@ -40,7 +50,7 @@ void HandleUdpCreate(char* ip, int port) {
     while(true) {
         bzero(buf, sizeof(buf));
         std::cin >> buf;
-        write(clientFd, buf, sizeof(buf));
+        write(clientFd, buf, strlen(buf));
     }
     close(clientFd);
 }
