@@ -12,11 +12,12 @@ link_directories("${PROJECT_SOURCE_DIR}/3rd/spdlog/build")
 # head file
 include_directories(./3rd/lua-5.3.5/src)
 include_directories("${PROJECT_SOURCE_DIR}/3rd/spdlog/include")
+include_directories(./3rd/kcp/ikcp.h)
 
 # libraries
 link_directories(./3rd/lua-5.3.5/src)
 link_directories("${PROJECT_SOURCE_DIR}/3rd/spdlog/build")
-
+link_directories("${PROJECT_SOURCE_DIR}/3rd/kcp/build")
 ######################## 3rd party ###############################
 
 add_executable(sunnet ${DIR_SRCS})
